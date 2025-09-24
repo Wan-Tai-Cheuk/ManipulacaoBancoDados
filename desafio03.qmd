@@ -1,0 +1,34 @@
+---
+title: "Desafio 3"
+author: "Wan"
+format: html
+editor: visual
+---
+
+```{r}
+library(readr)
+library(arrow)
+
+
+arquivo_parquet <- "C:/Users/Wan/Downloads/iris.parquet"
+
+df_parquet <- as.data.frame(read_parquet(arquivo_parquet))
+
+head(df_parquet)
+
+```
+
+```{r}
+library(jsonlite)
+library(dplyr)
+
+path_json <- "C:/Users/Wan/Downloads/price.json"
+
+df_json <- fromJSON(path_json)
+json_tib <- as_tibble(df_json)
+
+print(head(json_tib))
+
+```
+
+
