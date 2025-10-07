@@ -1,0 +1,147 @@
+---
+title: "desafio 11"
+format: html
+editor: visual
+---
+
+### 1) Utilizando o arquivo renda_adulta.csv e sabendo que ele não possui cabeçalho, faça a importação do banco de dados utilizando os nomes das colunas conforme apresentado acima e na sequência ali indicada. No momento da importação do arquivo, você deve, também, indicar os tipos de cada uma das colunas. Utilize o fato de que o símbolo ? representa valores faltantes.
+
+
+
+```{python}
+import pandas as pd
+import numpy as np
+
+# Nomes das colunas
+colunas = ['age', 'workclass', 'fnlwgt', 'education', 'education-num',
+           'marital-status', 'occupation', 'relationship', 'race', 'sex',
+           'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'income']
+
+# Tipos de dados
+tipos = {
+    'age': 'int64',
+    'workclass': 'category',
+    'fnlwgt': 'int64',
+    'education': 'category',
+    'education-num': 'int64',
+    'marital-status': 'category',
+    'occupation': 'category',
+    'relationship': 'category',
+    'race': 'category',
+    'sex': 'category',
+    'capital-gain': 'int64',
+    'capital-loss': 'int64',
+    'hours-per-week': 'int64',
+    'native-country': 'category',
+    'income': 'category'
+}
+
+# Leitura do CSV
+df = pd.read_csv(
+    'renda_adulta.csv.gz',
+    names=colunas,
+    dtype=tipos,
+    na_values='?',  # Substitui ? por NaN
+    header=None
+)
+
+```
+
+### 2) Apresente os tipos de cada uma das coluna.
+
+```{python}
+
+print(df.dtypes)
+```
+
+### 3) Apresente as dimensões da tabela de dados.
+
+```{python}
+
+print("Dimensões:", df.shape)
+```
+
+### 4) Quantas pessoas recebem acima de $50.000 e quantas pessoas recebem abaixo deste limiar?
+
+```{python}
+
+print(df['income'].value_counts())
+```
+
+### 5) Crie um objeto chamado renda_longo, no qual você transforma as colunas capital-gain e capital-loss (formato wide) para formato longo. Os valores destas variáveis devem ser armazenados numa nova coluna chamada Valor e os tipos de valores (gain e loss) devem ser armazenados numa coluna chamada tipo.
+
+```{python}
+
+renda_longo = df[['capital-gain', 'capital-loss']].copy()
+renda_longo = renda_longo.rename(columns={'capital-gain': 'gain', 'capital-loss': 'loss'})
+
+# Transforma em formato longo
+renda_longo = pd.melt(
+    renda_longo.reset_index(),
+    id_vars='index',
+    value_vars=['gain', 'loss'],
+    var_name='tipo',
+    value_name='Valor'
+)
+```
+
+### 6) Quais são as médias de horas trabalhadas por classe salarial?
+
+```{python}
+
+media_horas = df.groupby('income')['hours-per-week'].mean()
+print(media_horas)
+```
+
+### 7) Se cada linha representa uma pessoa, quantas pessoas foram amostradas em cada profissão?
+
+```{python}
+
+ocupacoes = df['occupation'].value_counts(dropna=False)
+print(ocupacoes)
+
+```
+
+### 8) Crie um gráfico de barras que apresente o número médio de horas trabalhadas semanalmente em função do nível salarial.
+
+```{python}
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.barplot(data=df, x='income', y='hours-per-week', estimator='mean', ci=None)
+plt.title('Média de Horas Trabalhadas por Semana por Classe Salarial')
+plt.xlabel('Renda')
+plt.ylabel('Horas por Semana')
+plt.show()
+
+```
+
+### Desafio
+
+```{python}
+genero_renda = pd.crosstab(df['sex'], df['income'], normalize='index') * 100
+print(genero_renda)
+
+```
+
+```{python}
+
+genero_renda.plot(kind='bar', stacked=True)
+plt.title('Distribuição de Renda por Gênero')
+plt.xlabel('Gênero')
+plt.ylabel('% de Pessoas')
+plt.legend(title='Renda')
+plt.show()
+```
+
+Como podemos ver que há evidências de discriminação ou desigualdade salarial entre gêneros. A proporção de homens com renda superior a \$50.000 é muito maior do que a de mulheres, indicando que o gênero está associado ao nível de renda. Porém esse resultado nao prova a causalidade podendo ser diversos fatores como, escolaridade, horas de trabalho ou diferentes ocupaçoes, etc.
+
+```{r}
+#| echo: false
+
+agora <- Sys.time()
+
+# Mostra
+cat("Arquivo compilado em:", format(agora, "%d/%m/%Y %H:%M:%S"), "\n")
+```
