@@ -1,0 +1,137 @@
+---
+title: "desafio13"
+format: html
+editor: visual
+---
+
+```{r}
+library(DBI)
+library(RSQLite)
+library(readr)
+library(dplyr)
+```
+
+```{r}
+caminho_basics <- "title.basics0.tsv.gz"
+caminho_ratings <- "title.ratings.tsv.gz"
+caminho_principals <- "title.principals0.tsv.gz"
+```
+
+```{r}
+basics <- read_tsv(caminho_basics, na = "\\N", quote = '')
+ratings <- read_tsv(caminho_ratings, na = "\\N", quote = '')
+principals <- read_tsv(caminho_principals, na = "\\N", quote = '')
+```
+```{r}
+db_file <- "movies_imdb.sqlite3"
+con <- dbConnect(RSQLite::SQLite(), db_file)
+```
+
+```{r}
+dbWriteTable(con, "basics", basics, overwrite = TRUE)
+dbWriteTable(con, "ratings", ratings, overwrite = TRUE)
+dbWriteTable(con, "principals", principals, overwrite = TRUE)
+```
+
+```{r}
+query1_sql <- "
+  SELECT
+    b.primaryTitle,
+    r.averageRating,
+    r.numVotes
+  FROM
+    ratings AS r
+  JOIN
+    basics AS b ON r.tconst = b.tconst
+  WHERE
+    b.titleType = 'movie'
+  ORDER BY
+    r.averageRating DESC,
+    r.numVotes DESC
+  LIMIT 5;
+"
+top_5_filmes <- dbGetQuery(con, query1_sql)
+print("Os 5 filmes com as maiores notas são:")
+print(top_5_filmes)
+```
+```{r}
+query2_sql <- "
+  WITH RECURSIVE split_genres(tconst, genre, remaining_genres) AS (
+    SELECT
+      tconst,
+      SUBSTR(genres, 1, INSTR(genres || ',', ',') - 1),
+      SUBSTR(genres, INSTR(genres || ',', ',') + 1)
+    FROM basics
+    WHERE genres IS NOT NULL
+    
+    UNION ALL
+
+    SELECT
+      tconst,
+      SUBSTR(remaining_genres, 1, INSTR(remaining_genres || ',', ',') - 1),
+      SUBSTR(remaining_genres, INSTR(remaining_genres || ',', ',') + 1)
+    FROM split_genres
+    WHERE remaining_genres != ''
+  )
+  SELECT
+    s.genre AS Genero,
+    COUNT(s.genre) AS Frequencia
+  FROM
+    split_genres AS s
+  JOIN
+    ratings AS r ON s.tconst = r.tconst
+  WHERE
+    r.averageRating > 8.0 AND s.genre != ''
+  GROUP BY
+    s.genre
+  ORDER BY
+    Frequencia DESC
+  LIMIT 1;
+"
+
+genero_mais_frequente <- dbGetQuery(con, query2_sql)
+
+print("Gênero mais frequente em filmes com nota > 8:")
+print(genero_mais_frequente)
+```
+
+
+```{r}
+query3_sql <- "
+  SELECT
+    p.nconst AS Ator_ID,
+    COUNT(p.tconst) AS Quantidade_Filmes
+  FROM
+    principals AS p
+  JOIN
+    ratings AS r ON p.tconst = r.tconst
+  JOIN
+    basics as b ON p.tconst = b.tconst
+  WHERE
+    p.category IN ('actor', 'actress') AND
+    r.averageRating > 7.5 AND
+    b.titleType = 'movie'
+  GROUP BY
+    p.nconst
+  ORDER BY
+    Quantidade_Filmes DESC
+  LIMIT 3;
+"
+
+top_3_atores <- dbGetQuery(con, query3_sql)
+
+print("Top 3 atores/atrizes em filmes com nota > 7.5:")
+print(top_3_atores)
+```
+```{r}
+#| echo: false
+dbDisconnect(con)
+```
+
+```{r}
+#| echo: false
+agora <- Sys.time()
+
+# Mostra
+cat("Arquivo compilado em:", format(agora, "%d/%m/%Y %H:%M:%S"), "\n")
+```
