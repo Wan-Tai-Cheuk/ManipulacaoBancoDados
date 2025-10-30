@@ -1,0 +1,106 @@
+---
+title: "desafio14"
+format: html
+editor: visual
+---
+
+```{r}
+#| echo: false
+library(readr)
+library(ggplot2)
+
+diamonds <- read_csv("C:\\Users\\Pichau\\Downloads\\diamonds.csv.gz")
+
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relação entre Peso (carat) e Preço (price) de Diamantes",
+    x = "Peso (carat)",
+    y = "Preço (US$)",
+    caption = "Fonte: Conjunto de dados diamonds (ggplot2)"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+Reduzi a opacidade dos pontos para despoluir a sobreposição excessiva de pontos e adicionei uma linha de tendência para facilitar a vizualização da relação geral das variáveis.
+
+A análise do gráfico revela uma forte associação positiva entre o peso (carat) e o preço (price) dos diamantes: quanto maior o peso da pedra, maior tende a ser o seu preço. A relação, embora aproximadamente linear, mostra que o preço cresce de forma mais acentuada para valores altos de carat, sugerindo que diamantes maiores possuem um valor de mercado desproporcionalmente maior. Essa tendência é esperada, já que diamantes grandes são mais raros e valorizados. Porém podemos notar também que existe diamantes com menores pesos e preços maiores do que o esperado que pode mostrar uma relacao com outras caracteristicas como o brilho, seu corte, e etc.
+
+```{r}
+#| echo: false
+ggplot(diamonds, aes(x = carat, y = price, color = cut)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Relação entre Peso (carat) e Preço (price) segundo o Corte do Diamante",
+    x = "Peso (carat)",
+    y = "Preço (US$)",
+    color = "Corte",
+    caption = "Fonte: Conjunto de dados diamonds (ggplot2)"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+A relação positiva entre peso e preço permanece presente em todos os tipos de corte de diamantes, mas a intensidade dessa relação varia conforme o corte. Diamantes com cortes de melhor qualidade (como Ideal e Premium) apresentam preços mais elevados para o mesmo peso, indicando que o corte influencia fortemente o valor final da pedra. Assim, além do peso, o tipo de corte é um fator determinante no preço, reforçando que o valor de um diamante resulta da combinação de múltiplas características de qualidade.
+
+```{r}
+#| echo: false
+library(dplyr)
+
+ggplot(diamonds, aes(x = carat, y = price, color = cut)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(color ~ clarity) +
+  labs(
+    title = "Relação entre Peso (carat) e Preço (price) por Cor e Clareza do Diamante",
+    subtitle = "As cores representam o tipo de corte",
+    x = "Peso (carat)",
+    y = "Preço (US$)",
+    caption = "Fonte: Conjunto de dados diamonds (ggplot2)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 8)
+  )
+
+diamonds_filtrados <- diamonds %>%
+  filter(
+    color %in% c("D", "J"),          # Apenas a melhor e pior cor
+    clarity %in% c("IF", "SI2")      # Apenas a melhor e uma clareza baixa
+  )
+
+
+ggplot(diamonds_filtrados, aes(x = carat, y = price, color = cut)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(color ~ clarity) +
+  labs(
+    title = "Relação Preço/Quilate (Cores D/J, Clarezas IF/SI2)",
+    subtitle = "As cores representam o tipo de corte",
+    x = "Peso (carat)",
+    y = "Preço (US$)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 10) # Pode aumentar o texto aqui
+  )
+```
+
+A relação entre peso e preço dos diamantes, embora sempre positiva, não é idêntica entre as diferentes combinações de qualidade, como este gráfico demonstra de forma clara. A visualização foca em comparar os extremos, filtrando os dados para exibir apenas as Cores D (incolor) e J (amarelada) e as Clarezas IF (alta) e SI2 (baixa).
+
+Alta Qualidade (Painel D / IF): No quadrante superior esquerdo, vemos que diamantes de alta qualidade (Cor D, Clareza IF) apresentam preços drasticamente mais altos. As linhas de tendência, que representam os diferentes cortes (cut), estão agrupadas em um patamar de preço muito elevado.
+
+Baixa Qualidade (Painel J / SI2): Em contraste, no quadrante inferior direito (Cor J, Clareza SI2), os valores são significativamente menores para o mesmo peso. As linhas de tendência estão posicionadas muito mais abaixo no eixo Y (Preço).
+
+Assim, o gráfico confirma que, embora peso e preço mantenham uma associação positiva, a inclinação e o nível dessa relação (o quão caro o diamante é) dependem diretamente da sua qualidade geral, definida pela combinação de corte, cor e clareza.
+
+```{r}
+#| echo: false
+agora <- Sys.time()
+
+# Mostra
+cat("Arquivo compilado em:", format(agora, "%d/%m/%Y %H:%M:%S"), "\n")
+```
